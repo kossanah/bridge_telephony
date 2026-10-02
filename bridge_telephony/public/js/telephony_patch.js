@@ -15,27 +15,24 @@
     }
 
     function patchCallIntegration() {
-        // Patch the is_call_integration_enabled response handler
+        // Patch the is_call_integration_enabled response handler safely
         const originalCall = frappe.call;
+        if (!originalCall) return;
 
-        frappe.call = function(opts) {
-            if (opts.method === 'crm.integrations.api.is_call_integration_enabled') {
-                // The API is already overridden via hooks, but let's ensure
-                // the frontend processes africastalking_enabled
-                const originalCallback = opts.callback;
-                opts.callback = function(r) {
-                    if (r && r.message) {
-                        // Make africastalking count toward callEnabled
-                        if (r.message.africastalking_enabled) {
-                            console.log('Africa\'s Talking telephony is enabled');
-                        }
+        frappe.call = function() {
+            const firstArg = arguments[0];
+            if (firstArg && typeof firstArg === 'object' && firstArg.method === 'crm.integrations.api.is_call_integration_enabled') {
+                const originalCallback = firstArg.callback;
+                firstArg.callback = function(r) {
+                    if (r && r.message && r.message.africastalking_enabled) {
+                        console.log('Africa\'s Talking telephony is enabled');
                     }
                     if (originalCallback) {
                         originalCallback(r);
                     }
                 };
             }
-            return originalCall.call(this, opts);
+            return originalCall.apply(this, arguments);
         };
     }
 })();

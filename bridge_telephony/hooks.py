@@ -39,7 +39,6 @@ fixtures = [
 
 # include js, css files in header of desk.html
 app_include_js = [
-    "/assets/bridge_telephony/js/telephony_patch.js",
     "/assets/bridge_telephony/js/incoming_call_popup.js"
 ]
 

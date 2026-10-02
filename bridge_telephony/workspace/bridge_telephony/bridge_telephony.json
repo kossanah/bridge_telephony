@@ -1,0 +1,123 @@
+{
+ "app": "bridge_telephony",
+ "charts": [],
+ "content": "[{\"id\":\"_LLvyL6sZz\",\"type\":\"header\",\"data\":{\"text\":\"<span class='h4'><b>Bridge Telephony</b></span>\",\"col\":12}},{\"id\":\"_rqjs5RcYJ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Bridge Telephony Settings\",\"col\":3}},{\"id\":\"_9Pm3vB1qT\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Call Queue Media\",\"col\":3}},{\"id\":\"_5Dw7yK2nR\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"_8Xz4mL6pQ\",\"type\":\"header\",\"data\":{\"text\":\"<span class='h4'><b>Configuration</b></span>\",\"col\":12}},{\"id\":\"_3Vy9nC5sP\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}},{\"id\":\"_7Ub2tE8rM\",\"type\":\"card\",\"data\":{\"card_name\":\"Telephony\",\"col\":4}},{\"id\":\"_4Qw6zH3vL\",\"type\":\"card\",\"data\":{\"card_name\":\"Media\",\"col\":4}}]",
+ "creation": "2025-11-30 06:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "phone",
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "Bridge Telephony",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Settings",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bridge Telephony Settings",
+   "link_count": 0,
+   "link_to": "Bridge Telephony Settings",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Test Connection",
+   "link_count": 0,
+   "link_to": "bridge_telephony.api.test_connection",
+   "link_type": "API",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Telephony",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Call Log",
+   "link_count": 0,
+   "link_to": "Call Log",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "CRM Telephony Agent",
+   "link_count": 0,
+   "link_to": "CRM Telephony Agent",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Media",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Call Queue Media",
+   "link_count": 0,
+   "link_to": "Call Queue Media",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-11-30 06:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bridge Telephony",
+ "name": "Bridge Telephony",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 26.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "Bridge Telephony Settings",
+   "link_to": "Bridge Telephony Settings",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "label": "Call Queue Media",
+   "link_to": "Call Queue Media",
+   "type": "DocType"
+  }
+ ],
+ "title": "Bridge Telephony",
+ "type": "Workspace"
+}

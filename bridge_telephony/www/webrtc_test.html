@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FreePBX WebRTC Test Dialer | local.bridge.ng</title>
+  <link rel="icon" href="/assets/frappe/images/favicon.png">
+  <script src="/assets/bridge_telephony/js/jssip.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --green: #10b981;
+      --green-hover: #059669;
+      --red: #ef4444;
+      --red-hover: #dc2626;
+      --yellow: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+    .container { width: 100%; max-width: 980px; display: grid; grid-template-columns: 380px 1fr; gap: 24px; }
+    @media (max-width: 860px) { .container { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4); }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 18px; }
+    
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .status-badge.disconnected { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .status-badge.connecting { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .status-badge.registered { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .disconnected .dot { background: var(--red); }
+    .connecting .dot { background: var(--yellow); animation: pulse 1.2s infinite; }
+    .registered .dot { background: var(--green); }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    input, select { width: 100%; padding: 9px 12px; background: #0f172a; border: 1px solid var(--card-border); border-radius: 8px; color: var(--text); font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+    input:focus, select:focus { border-color: var(--accent); }
+    
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-primary { background: var(--accent); color: white; width: 100%; }
+    .btn-primary:hover { filter: brightness(1.1); }
+    .btn-green { background: var(--green); color: white; flex: 1; }
+    .btn-green:hover { background: var(--green-hover); }
+    .btn-red { background: var(--red); color: white; flex: 1; }
+    .btn-red:hover { background: var(--red-hover); }
+    .btn-subtle { background: #334155; color: var(--text); padding: 6px 10px; font-size: 0.75rem; border-radius: 6px; }
+    .btn-subtle:hover { background: #475569; }
+
+    .dialer-display { background: #0f172a; border: 1px solid var(--card-border); border-radius: 10px; padding: 14px; text-align: center; margin-bottom: 14px; position: relative; }
+    .dialer-input { background: transparent; border: none; font-size: 1.4rem; font-weight: 700; text-align: center; color: var(--text); width: 100%; outline: none; letter-spacing: 0.05em; font-family: monospace; }
+    .call-state { font-size: 0.82rem; font-weight: 500; color: var(--text-muted); margin-top: 4px; min-height: 20px; }
+
+    /* Audio visualizer bar */
+    .audio-meter-container { display: flex; align-items: center; gap: 8px; margin-top: 8px; justify-content: center; font-size: 0.75rem; color: var(--text-muted); }
+    .audio-bar { width: 120px; height: 6px; background: #334155; border-radius: 3px; overflow: hidden; }
+    .audio-level { height: 100%; width: 0%; background: var(--green); transition: width 0.08s; }
+
+    .quick-dials { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    
+    .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .key { background: #0f172a; border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; font-size: 1.2rem; font-weight: 600; color: var(--text); cursor: pointer; transition: all 0.15s; }
+    .key:hover { background: #1e293b; border-color: var(--accent); }
+    .key:active { transform: scale(0.95); }
+    .key small { display: block; font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.1em; }
+
+    .call-actions { display: flex; gap: 10px; margin-bottom: 12px; }
+    
+    .incoming-modal { display: none; background: rgba(16, 185, 129, 0.15); border: 2px solid var(--green); border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center; animation: bounce 1s infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-4px); } }
+
+    .log-panel { display: flex; flex-direction: column; height: 100%; min-height: 520px; }
+    .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .log-terminal { flex: 1; background: #090d16; border: 1px solid var(--card-border); border-radius: 10px; padding: 12px; font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.76rem; overflow-y: auto; max-height: 540px; line-height: 1.5; color: #cbd5e1; }
+    .log-row { margin-bottom: 3px; word-break: break-all; }
+    .log-time { color: #64748b; margin-right: 6px; }
+    .log-tag { font-weight: 700; margin-right: 6px; padding: 1px 4px; border-radius: 3px; font-size: 0.7rem; }
+    .tag-sip { background: #1e3a8a; color: #93c5fd; }
+    .tag-wss { background: #065f46; color: #6ee7b7; }
+    .tag-call { background: #701a75; color: #f0abfc; }
+    .tag-err { background: #7f1d1d; color: #fca5a5; }
+    .tag-ice { background: #78350f; color: #fde68a; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Left: Softphone Dialer -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+        <div>
+          <h1>📞 WebRTC Dialer</h1>
+          <div class="subtitle">FreePBX Asterisk 22 & Frappe CRM</div>
+        </div>
+        <div id="statusBadge" class="status-badge disconnected">
+          <span class="dot"></span>
+          <span id="statusText">Disconnected</span>
+        </div>
+      </div>
+
+      <!-- Incoming Call Card -->
+      <div id="incomingCard" class="incoming-modal">
+        <div style="font-weight: 700; font-size: 1.05rem; color: #6ee7b7; margin-bottom: 4px;">Incoming Call!</div>
+        <div id="incomingCaller" style="font-size: 1.15rem; font-family: monospace; font-weight: 700; margin-bottom: 10px;">Unknown</div>
+        <div style="display: flex; gap: 8px;">
+          <button id="btnAccept" class="btn btn-green">Accept</button>
+          <button id="btnReject" class="btn btn-red">Reject</button>
+        </div>
+      </div>
+
+      <!-- Speaker / Output Device Selection & Test -->
+      <div style="margin-bottom: 12px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label style="margin: 0;">🔊 Speaker / Output Device</label>
+          <button class="btn btn-subtle" onclick="testSpeaker()">Play Beep</button>
+        </div>
+        <select id="audioOutputSelect">
+          <option value="default">Default System Audio Output</option>
+        </select>
+      </div>
+
+      <!-- Settings Collapsible / Drawer -->
+      <details style="margin-bottom: 14px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid var(--card-border);">
+        <summary style="font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text-muted); outline: none;">
+          ⚙️ Connection Settings
+        </summary>
+        <div style="margin-top: 10px;">
+          <div class="form-group">
+            <label>WSS Server URI</label>
+            <select id="wssServer">
+              <option value="wss://webrtc.bridge.ng:8089/ws" selected>wss://webrtc.bridge.ng:8089/ws (Let's Encrypt)</option>
+              <option value="wss://sip.bridge.ng:8089/ws">wss://sip.bridge.ng:8089/ws (Let's Encrypt)</option>
+              <option value="wss://172.187.235.228:8089/ws">wss://172.187.235.228:8089/ws (Direct IP)</option>
+            </select>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="form-group">
+              <label>Extension</label>
+              <input type="text" id="sipExt" value="2001">
+            </div>
+            <div class="form-group">
+              <label>SIP Password</label>
+              <input type="password" id="sipSecret" value="BridgeVoice2026!WebRTC">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>SIP Domain</label>
+            <input type="text" id="sipDomain" value="webrtc.bridge.ng">
+          </div>
+          <div class="form-group">
+            <label>STUN Server</label>
+            <input type="text" id="stunServer" value="stun:stun.l.google.com:19302">
+          </div>
+        </div>
+      </details>
+
+      <div style="margin-bottom: 16px;">
+        <button id="btnRegister" class="btn btn-primary">Connect & Register</button>
+      </div>
+
+      <!-- Active Number Display -->
+      <div class="dialer-display">
+        <input id="targetNumber" class="dialer-input" type="text" placeholder="Enter number..." autocomplete="off">
+        <div id="callState" class="call-state">Idle</div>
+        
+        <!-- Live Audio Level Visualizer -->
+        <div id="audioMeter" class="audio-meter-container" style="display: none;">
+          <span>Inbound Audio:</span>
+          <div class="audio-bar">
+            <div id="audioLevel" class="audio-level"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Test Targets -->
+      <div class="quick-dials">
+        <button class="btn btn-subtle" onclick="setNumber('*43')">🔊 *43 Echo Test</button>
+        <button class="btn btn-subtle" onclick="setNumber('1001')">👤 1001 MicroSIP</button>
+        <button class="btn btn-subtle" onclick="setNumber('600')">👥 600 Sales Group</button>
+      </div>
+
+      <!-- Keypad -->
+      <div class="keypad">
+        <button class="key" onclick="pressKey('1')">1<small>&nbsp;</small></button>
+        <button class="key" onclick="pressKey('2')">2<small>ABC</small></button>
+        <button class="key" onclick="pressKey('3')">3<small>DEF</small></button>
+        <button class="key" onclick="pressKey('4')">4<small>GHI</small></button>
+        <button class="key" onclick="pressKey('5')">5<small>JKL</small></button>
+        <button class="key" onclick="pressKey('6')">6<small>MNO</small></button>
+        <button class="key" onclick="pressKey('7')">7<small>PQRS</small></button>
+        <button class="key" onclick="pressKey('8')">8<small>TUV</small></button>
+        <button class="key" onclick="pressKey('9')">9<small>WXYZ</small></button>
+        <button class="key" onclick="pressKey('*')">*<small>&nbsp;</small></button>
+        <button class="key" onclick="pressKey('0')">0<small>+</small></button>
+        <button class="key" onclick="pressKey('#')">#<small>&nbsp;</small></button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="call-actions">
+        <button id="btnCall" class="btn btn-green">📞 Call</button>
+        <button id="btnHangup" class="btn btn-red" disabled>⛔ Hang Up</button>
+        <button id="btnMute" class="btn btn-subtle" disabled>🎤 Mute</button>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button id="btnForceAudio" class="btn btn-subtle" style="display: none; width: 100%; border-color: var(--green); color: #6ee7b7;" onclick="forceAudioPlayback()">
+          🔊 Force Audio Playback
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Real-time Telephony Diagnostics -->
+    <div class="card log-panel">
+      <div class="log-header">
+        <div>
+          <div style="font-weight: 700; font-size: 0.95rem;">🛰️ Telephony Diagnostic Stream</div>
+          <div style="font-size: 0.75rem; color: var(--text-muted);">Live SIP, WSS, ICE & RTP Packet Monitor</div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-subtle" onclick="clearLog()">Clear</button>
+        </div>
+      </div>
+      <div id="logTerminal" class="log-terminal">
+        <div class="log-row"><span class="log-time">--:--:--</span><span class="log-tag tag-sip">INFO</span>Ready. Click "Connect & Register" to initialize WebRTC engine.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebRTC Audio Output Element (plays the remote voice) -->
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
+  <script>
+    let ua = null;
+    let currentSession = null;
+    let callTimer = null;
+    let callSeconds = 0;
+    let isMuted = false;
+    let audioMeterAnim = null;
+    let audioMeterCtx = null;
+
+    const el = id => document.getElementById(id);
+
+    function log(tag, msg, type = 'sip') {
+      const row = document.createElement('div');
+      row.className = 'log-row';
+      const time = new Date().toTimeString().split(' ')[0];
+      row.innerHTML = `<span class="log-time">${time}</span><span class="log-tag tag-${type}">${tag}</span>${escapeHtml(msg)}`;
+      el('logTerminal').appendChild(row);
+      el('logTerminal').scrollTop = el('logTerminal').scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    function clearLog() { el('logTerminal').innerHTML = ''; }
+
+    function setStatus(status, text) {
+      el('statusBadge').className = `status-badge ${status}`;
+      el('statusText').innerText = text;
+    }
+
+    function pressKey(key) {
+      el('targetNumber').value += key;
+      if (currentSession && currentSession.isInProgress()) {
+        currentSession.sendDTMF(key);
+        log('DTMF', `Sent in-call tone: ${key}`, 'call');
+      }
+    }
+
+    function setNumber(num) {
+      el('targetNumber').value = num;
+    }
+
+    // Populate Audio Output Devices (Speakers / Headphones)
+    async function loadAudioOutputs() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const outputs = devices.filter(d => d.kind === 'audiooutput');
+        const sel = el('audioOutputSelect');
+        sel.innerHTML = '';
+        if (outputs.length === 0) {
+          sel.innerHTML = '<option value="default">Default System Audio Output</option>';
+          return;
+        }
+        outputs.forEach((dev, idx) => {
+          const opt = document.createElement('option');
+          opt.value = dev.deviceId;
+          opt.text = dev.label || `Speaker/Headset ${idx + 1}`;
+          sel.appendChild(opt);
+        });
+      } catch (e) {
+        console.warn('Enumerate audio devices:', e);
+      }
+    }
+    navigator.mediaDevices?.addEventListener('devicechange', loadAudioOutputs);
+    loadAudioOutputs();
+
+    el('audioOutputSelect').onchange = async function() {
+      const deviceId = this.value;
+      const audio = el('remoteAudio');
+      if (typeof audio.setSinkId === 'function') {
+        try {
+          await audio.setSinkId(deviceId);
+          log('AUDIO', `Audio output set to device: ${deviceId}`, 'wss');
+        } catch (err) {
+          log('ERR', `setSinkId failed: ${err.message}`, 'err');
+        }
+      }
+    };
+
+    function testSpeaker() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 587.33; // D5
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+        setTimeout(() => ctx.close(), 400);
+        log('AUDIO', 'Playing test beep through default speaker/headset.', 'wss');
+      } catch (e) {
+        log('ERROR', 'AudioContext error: ' + e.message, 'err');
+      }
+    }
+
+    el('btnRegister').onclick = function() {
+      if (ua && ua.isRegistered()) {
+        log('WSS', 'Unregistering and disconnecting user agent...', 'wss');
+        ua.stop();
+        return;
+      }
+
+      const wss = el('wssServer').value;
+      const ext = el('sipExt').value.trim();
+      const secret = el('sipSecret').value.trim();
+      const domain = el('sipDomain').value.trim();
+      const stun = el('stunServer').value.trim();
+
+      log('WSS', `Connecting to Asterisk WSS engine at ${wss}...`, 'wss');
+      setStatus('connecting', 'Connecting...');
+
+      try {
+        const socket = new JsSIP.WebSocketInterface(wss);
+        const configuration = {
+          sockets: [socket],
+          uri: `sip:${ext}@${domain}`,
+          password: secret,
+          register: true,
+          session_timers: false,
+          pcConfig: {
+            iceServers: [{ urls: [stun] }]
+          }
+        };
+
+        ua = new JsSIP.UA(configuration);
+
+        ua.on('connecting', () => {
+          log('WSS', `WebSocket handshake initiated with ${wss}`, 'wss');
+        });
+
+        ua.on('connected', () => {
+          log('WSS', `WebSocket connected! Sending SIP REGISTER for sip:${ext}@${domain}...`, 'wss');
+          setStatus('connecting', 'Registering...');
+        });
+
+        ua.on('disconnected', e => {
+          log('WSS', `WebSocket disconnected: code=${e.code}, reason=${e.reason}`, 'err');
+          setStatus('disconnected', 'Disconnected');
+          el('btnRegister').innerText = 'Connect & Register';
+        });
+
+        ua.on('registered', () => {
+          log('SIP', `SIP/2.0 200 OK! Extension ${ext} successfully REGISTERED on Asterisk.`, 'sip');
+          setStatus('registered', `Online (${ext})`);
+          el('btnRegister').innerText = 'Disconnect';
+          loadAudioOutputs(); // refresh devices after user grant
+        });
+
+        ua.on('unregistered', () => {
+          log('SIP', 'SIP session unregistered.', 'sip');
+          setStatus('disconnected', 'Disconnected');
+          el('btnRegister').innerText = 'Connect & Register';
+        });
+
+        ua.on('registrationFailed', e => {
+          log('ERR', `SIP Registration Failed: ${e.cause}`, 'err');
+          setStatus('disconnected', 'Reg Failed');
+          el('btnRegister').innerText = 'Connect & Register';
+        });
+
+        ua.on('newRTCSession', data => {
+          handleSession(data.session);
+        });
+
+        ua.start();
+      } catch (err) {
+        log('ERR', 'Initialization failed: ' + err.message, 'err');
+        setStatus('disconnected', 'Error');
+      }
+    };
+
+    function attachRemoteMediaStream(stream) {
+      const remoteAudio = el('remoteAudio');
+      if (!stream) return;
+      stream.getAudioTracks().forEach(t => { t.enabled = true; });
+      log('ICE', `Attaching MediaStream with ${stream.getAudioTracks().length} audio track(s) to <audio> tag...`, 'ice');
+
+      remoteAudio.srcObject = stream;
+      remoteAudio.muted = false;
+      remoteAudio.volume = 1.0;
+
+      // Apply selected speaker output if supported
+      const selectedSink = el('audioOutputSelect').value;
+      if (selectedSink && selectedSink !== 'default' && typeof remoteAudio.setSinkId === 'function') {
+        remoteAudio.setSinkId(selectedSink).catch(() => {});
+      }
+
+      const p = remoteAudio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          log('AUDIO', '▶ Remote audio is PLAYING through speakers/headset!', 'wss');
+          startAudioVisualizer(stream);
+          el('btnForceAudio').style.display = 'none';
+        }).catch(err => {
+          log('ERR', `Autoplay policy blocked audio: ${err.message}. Click 'Force Audio Playback' below.`, 'err');
+          el('btnForceAudio').style.display = 'inline-flex';
+        });
+      }
+    }
+
+    function forceAudioPlayback() {
+      const remoteAudio = el('remoteAudio');
+      remoteAudio.muted = false;
+      remoteAudio.volume = 1.0;
+      remoteAudio.play().then(() => {
+        log('AUDIO', '▶ Forced audio playback succeeded!', 'wss');
+        el('btnForceAudio').style.display = 'none';
+      }).catch(e => {
+        log('ERR', 'Forced playback error: ' + e.message, 'err');
+      });
+    }
+
+    function startAudioVisualizer(stream) {
+      try {
+        if (audioMeterCtx) { try { audioMeterCtx.close(); } catch (e) {} }
+        audioMeterCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioMeterCtx.createMediaStreamSource(stream);
+        const analyser = audioMeterCtx.createAnalyser();
+        analyser.fftSize = 64;
+        source.connect(analyser);
+
+        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+        el('audioMeter').style.display = 'flex';
+
+        function updateMeter() {
+          if (!currentSession) {
+            el('audioMeter').style.display = 'none';
+            return;
+          }
+          analyser.getByteFrequencyData(dataArray);
+          let sum = 0;
+          for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+          const avg = sum / dataArray.length;
+          const percent = Math.min(100, Math.round((avg / 128) * 100));
+          el('audioLevel').style.width = percent + '%';
+          audioMeterAnim = requestAnimationFrame(updateMeter);
+        }
+        updateMeter();
+      } catch (e) {
+        console.warn('Audio meter error:', e);
+      }
+    }
+
+    function handleSession(session) {
+      currentSession = session;
+      const isIncoming = session.direction === 'incoming';
+
+      if (isIncoming) {
+        const caller = session.remote_identity.uri.user || session.remote_identity.display_name || 'Unknown';
+        log('CALL', `Incoming call from: ${caller}`, 'call');
+        el('incomingCaller').innerText = caller;
+        el('incomingCard').style.display = 'block';
+        el('callState').innerText = `Incoming call from ${caller}...`;
+        playRingtone();
+      }
+
+      // CRITICAL FIX: Bind ontrack directly to peerconnection as soon as it exists
+      session.on('peerconnection', data => {
+        const pc = data.peerconnection;
+        log('ICE', 'PeerConnection created. Binding ontrack event handler...', 'ice');
+
+        pc.ontrack = event => {
+          log('ICE', `Received remote audio track: ${event.track.kind} (${event.track.id})`, 'ice');
+          let stream = null;
+          if (event.streams && event.streams[0]) {
+            stream = event.streams[0];
+          } else {
+            stream = new MediaStream([event.track]);
+          }
+          attachRemoteMediaStream(stream);
+        };
+
+        pc.oniceconnectionstatechange = () => {
+          log('ICE', `ICE Connection State: ${pc.iceConnectionState}`, 'ice');
+        };
+
+        pc.onconnectionstatechange = () => {
+          log('ICE', `PeerConnection State: ${pc.connectionState}`, 'ice');
+        };
+      });
+
+      session.on('progress', () => {
+        log('CALL', 'Call in progress (180/183 Ringing / Early Media)', 'call');
+        el('callState').innerText = 'Ringing...';
+        checkAndAttachFallback();
+      });
+
+      session.on('confirmed', () => {
+        log('CALL', 'Call confirmed (200 OK)! Connected.', 'call');
+        stopRingtone();
+        el('incomingCard').style.display = 'none';
+        el('btnHangup').disabled = false;
+        el('btnMute').disabled = false;
+        el('btnCall').disabled = true;
+        startCallTimer();
+        checkAndAttachFallback();
+      });
+
+      session.on('ended', () => {
+        log('CALL', 'Call ended normally (BYE).', 'call');
+        cleanupCall();
+      });
+
+      session.on('failed', e => {
+        log('CALL', `Call failed or rejected: ${e.cause}`, 'err');
+        cleanupCall();
+      });
+
+      function checkAndAttachFallback() {
+        // Fallback: If ontrack was delayed or missed, query receivers
+        if (!session.connection) return;
+        const receivers = session.connection.getReceivers ? session.connection.getReceivers() : [];
+        const audioTracks = receivers.map(r => r.track).filter(t => t && t.kind === 'audio');
+        if (audioTracks.length > 0) {
+          const remoteAudio = el('remoteAudio');
+          if (!remoteAudio.srcObject || remoteAudio.paused) {
+            log('ICE', `Fallback: Found ${audioTracks.length} active audio receiver track(s). Binding...`, 'ice');
+            attachRemoteMediaStream(new MediaStream(audioTracks));
+          }
+        }
+      }
+    }
+
+    el('btnCall').onclick = async function() {
+      const num = el('targetNumber').value.trim();
+      if (!num) { alert('Please enter an extension or phone number.'); return; }
+      if (!ua || !ua.isRegistered()) { alert('Please connect and register your extension first.'); return; }
+
+      try {
+        log('CALL', `Initiating WebRTC call to: ${num}...`, 'call');
+        el('callState').innerText = `Calling ${num}...`;
+        el('btnCall').disabled = true;
+        el('btnHangup').disabled = false;
+
+        const eventHandlers = {
+          progress: () => log('CALL', 'Ringing target...', 'call'),
+          failed: e => log('ERR', `Call failed: ${e.cause}`, 'err'),
+          ended: () => log('CALL', 'Call ended.', 'call'),
+          confirmed: () => log('CALL', 'Connected!', 'call')
+        };
+
+        const options = {
+          eventHandlers: eventHandlers,
+          mediaConstraints: { audio: true, video: false },
+          rtcOfferConstraints: {
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: false
+          },
+          pcConfig: {
+            iceServers: [{ urls: [el('stunServer').value.trim()] }]
+          }
+        };
+
+        ua.call(`sip:${num}@${el('sipDomain').value.trim()}`, options);
+      } catch (err) {
+        log('ERR', 'Call initiation error: ' + err.message, 'err');
+        cleanupCall();
+      }
+    };
+
+    el('btnHangup').onclick = function() {
+      if (currentSession) {
+        log('CALL', 'Terminating call...', 'call');
+        currentSession.terminate();
+      }
+      cleanupCall();
+    };
+
+    el('btnAccept').onclick = function() {
+      if (currentSession) {
+        stopRingtone();
+        el('incomingCard').style.display = 'none';
+        currentSession.answer({
+          mediaConstraints: { audio: true, video: false },
+          rtcAnswerConstraints: {
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: false
+          }
+        });
+      }
+    };
+
+    el('btnReject').onclick = function() {
+      if (currentSession) {
+        stopRingtone();
+        el('incomingCard').style.display = 'none';
+        currentSession.terminate({ status_code: 486, reason_phrase: 'Busy Here' });
+      }
+      cleanupCall();
+    };
+
+    el('btnMute').onclick = function() {
+      if (!currentSession) return;
+      if (isMuted) {
+        currentSession.unmute({ audio: true });
+        isMuted = false;
+        el('btnMute').innerText = '🎤 Mute';
+        log('CALL', 'Microphone unmuted.', 'call');
+      } else {
+        currentSession.mute({ audio: true });
+        isMuted = true;
+        el('btnMute').innerText = '🔇 Unmute';
+        log('CALL', 'Microphone muted.', 'call');
+      }
+    };
+
+    function startCallTimer() {
+      callSeconds = 0;
+      clearInterval(callTimer);
+      callTimer = setInterval(() => {
+        callSeconds++;
+        const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+        const secs = String(callSeconds % 60).padStart(2, '0');
+        el('callState').innerText = `Connected · ${mins}:${secs}`;
+      }, 1000);
+    }
+
+    function cleanupCall() {
+      stopRingtone();
+      clearInterval(callTimer);
+      if (audioMeterAnim) cancelAnimationFrame(audioMeterAnim);
+      if (audioMeterCtx) { try { audioMeterCtx.close(); } catch (e) {} audioMeterCtx = null; }
+      callTimer = null;
+      currentSession = null;
+      isMuted = false;
+      el('incomingCard').style.display = 'none';
+      el('audioMeter').style.display = 'none';
+      el('btnForceAudio').style.display = 'none';
+      el('btnCall').disabled = false;
+      el('btnHangup').disabled = true;
+      el('btnMute').disabled = true;
+      el('btnMute').innerText = '🎤 Mute';
+      el('callState').innerText = 'Idle';
+      
+      const remoteAudio = el('remoteAudio');
+      remoteAudio.pause();
+      remoteAudio.srcObject = null;
+    }
+
+    let ringtoneAudioCtx = null;
+    let ringtoneInterval = null;
+    function playRingtone() {
+      try {
+        ringtoneAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function chime() {
+          if (!ringtoneAudioCtx) return;
+          const now = ringtoneAudioCtx.currentTime;
+          const osc = ringtoneAudioCtx.createOscillator();
+          const gain = ringtoneAudioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.2);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+          osc.connect(gain);
+          gain.connect(ringtoneAudioCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.9);
+        }
+        chime();
+        ringtoneInterval = setInterval(chime, 2400);
+      } catch (e) {}
+    }
+
+    function stopRingtone() {
+      if (ringtoneInterval) { clearInterval(ringtoneInterval); ringtoneInterval = null; }
+      if (ringtoneAudioCtx) { try { ringtoneAudioCtx.close(); } catch (e) {} ringtoneAudioCtx = null; }
+    }
+  </script>
+</body>
+</html>

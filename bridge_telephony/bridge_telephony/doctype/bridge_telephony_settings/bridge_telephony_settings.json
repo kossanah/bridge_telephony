@@ -1,0 +1,287 @@
+{
+ "actions": [],
+ "creation": "2025-11-30 06:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "provider",
+  "section_freepbx",
+  "freepbx_enabled",
+  "freepbx_host",
+  "freepbx_ami_port",
+  "freepbx_ami_username",
+  "freepbx_ami_secret",
+  "column_break_freepbx",
+  "freepbx_context",
+  "freepbx_recording_url",
+  "freepbx_webhook_token",
+  "section_webrtc",
+  "calling_mode",
+  "webrtc_wss_url",
+  "column_break_webrtc",
+  "webrtc_sip_domain",
+  "webrtc_stun_server",
+  "section_credentials",
+  "username",
+  "api_key",
+  "column_break_1",
+  "phone_number",
+  "webhook_verify_token",
+  "test_connection",
+  "section_features",
+  "enable_recording",
+  "enable_webrtc",
+  "enable_call_queue",
+  "column_break_2",
+  "default_queue_music",
+  "auto_create_call_logs",
+  "section_sip",
+  "enable_sip",
+  "sip_domain",
+  "sip_username",
+  "sip_password"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "default": "FreePBX",
+   "fieldname": "provider",
+   "fieldtype": "Select",
+   "label": "Telephony Provider",
+   "options": "FreePBX\nAfrica's Talking"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'FreePBX'",
+   "fieldname": "section_freepbx",
+   "fieldtype": "Section Break",
+   "label": "FreePBX Configuration"
+  },
+  {
+   "default": "1",
+   "fieldname": "freepbx_enabled",
+   "fieldtype": "Check",
+   "label": "Enable FreePBX Integration"
+  },
+  {
+   "default": "172.187.235.228",
+   "description": "FreePBX server IP or hostname (e.g., 172.187.235.228 or 127.0.0.1 if tunneled)",
+   "fieldname": "freepbx_host",
+   "fieldtype": "Data",
+   "label": "Asterisk AMI Host",
+   "mandatory_depends_on": "eval:doc.freepbx_enabled"
+  },
+  {
+   "default": "5038",
+   "description": "Asterisk Manager Interface TCP port (default: 5038)",
+   "fieldname": "freepbx_ami_port",
+   "fieldtype": "Int",
+   "label": "Asterisk AMI Port",
+   "mandatory_depends_on": "eval:doc.freepbx_enabled"
+  },
+  {
+   "default": "frappe_crm",
+   "fieldname": "freepbx_ami_username",
+   "fieldtype": "Data",
+   "label": "AMI Username",
+   "mandatory_depends_on": "eval:doc.freepbx_enabled"
+  },
+  {
+   "fieldname": "freepbx_ami_secret",
+   "fieldtype": "Password",
+   "label": "AMI Secret",
+   "mandatory_depends_on": "eval:doc.freepbx_enabled"
+  },
+  {
+   "fieldname": "column_break_freepbx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "from-internal",
+   "description": "Default FreePBX dialplan context for internal and outbound routing (default: from-internal)",
+   "fieldname": "freepbx_context",
+   "fieldtype": "Data",
+   "label": "Dialplan Context"
+  },
+  {
+   "default": "https://voice.bridge.ng",
+   "description": "Base URL of FreePBX web service for audio recordings",
+   "fieldname": "freepbx_recording_url",
+   "fieldtype": "Data",
+   "label": "FreePBX Recording Base URL"
+  },
+  {
+   "description": "Optional security token for validating inbound webhooks from FreePBX",
+   "fieldname": "freepbx_webhook_token",
+   "fieldtype": "Data",
+   "label": "FreePBX Webhook Secret Token"
+  },
+  {
+   "fieldname": "section_webrtc",
+   "fieldtype": "Section Break",
+   "label": "WebRTC & In-Browser Calling"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_webrtc",
+   "fieldtype": "Check",
+   "label": "Enable WebRTC In-Browser Calling"
+  },
+  {
+   "default": "WebRTC (In-Browser Phone)",
+   "fieldname": "calling_mode",
+   "fieldtype": "Select",
+   "label": "Default Calling Mode",
+   "options": "WebRTC (In-Browser Phone)\nAMI Originate (MicroSIP Desktop)"
+  },
+  {
+   "default": "wss://webrtc.bridge.ng:8089/ws",
+   "fieldname": "webrtc_wss_url",
+   "fieldtype": "Data",
+   "label": "Asterisk WSS URI",
+   "description": "WebSocket Secure endpoint for Asterisk mini-HTTP WSS server (e.g. wss://webrtc.bridge.ng:8089/ws)"
+  },
+  {
+   "fieldname": "column_break_webrtc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "webrtc.bridge.ng",
+   "fieldname": "webrtc_sip_domain",
+   "fieldtype": "Data",
+   "label": "WebRTC SIP Domain",
+   "description": "Domain configured on Asterisk for PJSIP WebRTC transport"
+  },
+  {
+   "default": "stun:stun.l.google.com:19302",
+   "fieldname": "webrtc_stun_server",
+   "fieldtype": "Data",
+   "label": "STUN Server URI"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "section_credentials",
+   "fieldtype": "Section Break",
+   "label": "Africa's Talking Credentials"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "username",
+   "fieldtype": "Data",
+   "label": "Africa's Talking Username"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "api_key",
+   "fieldtype": "Password",
+   "label": "API Key"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "description": "Registered Africa's Talking phone number",
+   "fieldname": "phone_number",
+   "fieldtype": "Data",
+   "label": "Your AT Phone Number"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "webhook_verify_token",
+   "fieldtype": "Data",
+   "label": "Webhook Verification Token"
+  },
+  {
+   "fieldname": "section_features",
+   "fieldtype": "Section Break",
+   "label": "Features"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_recording",
+   "fieldtype": "Check",
+   "label": "Enable Call Recording"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_call_queue",
+   "fieldtype": "Check",
+   "label": "Enable Call Queue"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_queue_music",
+   "fieldtype": "Link",
+   "label": "Default Queue Hold Music",
+   "options": "Call Queue Media"
+  },
+  {
+   "default": "1",
+   "fieldname": "auto_create_call_logs",
+   "fieldtype": "Check",
+   "label": "Auto Create Call Logs"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "section_sip",
+   "fieldtype": "Section Break",
+   "label": "SIP Configuration"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking'",
+   "fieldname": "enable_sip",
+   "fieldtype": "Check",
+   "label": "Enable SIP Integration"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking' && doc.enable_sip",
+   "fieldname": "sip_domain",
+   "fieldtype": "Data",
+   "label": "SIP Domain"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking' && doc.enable_sip",
+   "fieldname": "sip_username",
+   "fieldtype": "Data",
+   "label": "SIP Username"
+  },
+  {
+   "depends_on": "eval:doc.provider == 'Africa\\'s Talking' && doc.enable_sip",
+   "fieldname": "sip_password",
+   "fieldtype": "Password",
+   "label": "SIP Password"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-30 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bridge Telephony",
+ "name": "Bridge Telephony Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

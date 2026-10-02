@@ -66,7 +66,8 @@
   "alignment": "",
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  },
  {
   "name": "CRM Telephony Agent-freepbx_extension",
@@ -135,7 +136,8 @@
   "alignment": "",
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  },
  {
   "name": "CRM Telephony Agent-freepbx",
@@ -204,7 +206,8 @@
   "alignment": "",
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  },
  {
   "name": "CRM Telephony Agent-section_break_freepbx",
@@ -273,7 +276,8 @@
   "alignment": "",
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  },
  {
   "name": "CRM Telephony Agent-africastalking_number",
@@ -342,7 +346,8 @@
   "alignment": null,
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  },
  {
   "name": "CRM Telephony Agent-africastalking",
@@ -411,7 +416,8 @@
   "alignment": null,
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  },
  {
   "name": "CRM Telephony Agent-section_break_africastalking",
@@ -480,6 +486,7 @@
   "alignment": null,
   "mask": 0,
   "set_only_once": 0,
-  "allow_bulk_edit": 0
+  "allow_bulk_edit": 0,
+  "doctype": "Custom Field"
  }
 ]
